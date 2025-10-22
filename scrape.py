@@ -22,19 +22,31 @@ def parse_video_card(card):
     meta = card.select_one("#metadata-line")
     meta_text = meta.text.strip() if meta else ""
     # Extract approximate view counts and upload time heuristically
+    # YouTube often separates metadata with a bullet character '•' or newlines.
     views = None
     upload = None
     if meta:
-        parts = [p.strip() for p in meta_text.split("\n") if p.strip()]
-        if len(parts) >= 1:
-            views = parts[0]
-        if len(parts) >= 2:
-            upload = parts[1]
+        # split on bullets and newlines, keep non-empty parts
+        raw_parts = []
+        for part in meta_text.replace('\u2022', '\n').split('\n'):
+            p = part.strip()
+            if p and p != '•':
+                raw_parts.append(p)
+        # first non-bullet part is usually views (e.g., '324K views' or '17M views')
+        if len(raw_parts) >= 1:
+            views = raw_parts[0]
+        if len(raw_parts) >= 2:
+            upload = raw_parts[1]
     # duration
+    # duration: look for the thumbnail overlay time label which may include 'SHORTS'
     duration = None
-    dur = card.select_one("span.ytd-thumbnail-overlay-time-status-renderer")
+    # multiple possible selectors depending on markup
+    dur = card.select_one("ytd-thumbnail-overlay-time-status-renderer span") or card.select_one("span.ytd-thumbnail-overlay-time-status-renderer")
     if dur:
         duration = dur.text.strip()
+        # normalize weird unicode bullets
+        if duration == '•':
+            duration = None
     channel = None
     ch = card.select_one("ytd-channel-name a")
     if ch:
