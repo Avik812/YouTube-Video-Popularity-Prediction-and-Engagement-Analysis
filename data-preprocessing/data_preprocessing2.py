@@ -138,8 +138,8 @@ def align_and_merge(scraped, api):
 # -------------------------
 
 def main():
-    in_scraped = Path("scraped_trending.jsonl")
-    in_api = Path("api_videos.jsonl")
+    in_scraped = Path("data-collection/data/scraped_data.jsonl")
+    in_api = Path("data-collection/data/api_data.jsonl")
     outdir = Path("cleaned_output")
     outdir.mkdir(exist_ok=True)
 
@@ -157,9 +157,9 @@ def main():
     print("Merging datasets...")
     combined = align_and_merge(scraped_clean, api_clean)
 
-    scraped_clean.to_csv(outdir / "scraped_clean.csv", index=False)
-    api_clean.to_csv(outdir / "api_clean.csv", index=False)
-    combined.to_csv(outdir / "combined_canonical.csv", index=False)
+    scraped_clean.to_csv("data-preprocessing/data/scraped_clean.csv", index=False)
+    api_clean.to_csv("data-preprocessing/data/api_clean.csv", index=False)
+    combined.to_csv("data-preprocessing/data/combined_canonical.csv", index=False)
 
     print("\nPreprocessing complete!")
     print(f"Cleaned files saved in: {outdir.resolve()}")

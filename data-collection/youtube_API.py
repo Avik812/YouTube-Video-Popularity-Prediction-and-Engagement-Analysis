@@ -58,7 +58,7 @@ if __name__ == "__main__":
         ids = get_video_ids_from_search(q, max_results=10)  # tune to reach 3000
         vids = fetch_videos(ids)
         all_vids.extend(vids)
-    with open("data-collection/data/api_videos.jsonl", "w", encoding="utf-8") as f:
+    with open("data-collection/data/api_data.jsonl", "w", encoding="utf-8") as f:
         for row in all_vids:
             f.write(json.dumps(row, ensure_ascii=False) + "\n")
     print("Saved", len(all_vids))

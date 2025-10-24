@@ -114,4 +114,4 @@ def scrape_search(query, max_results=10, out_file="scraped_videos.jsonl"):
 
 if __name__ == "__main__":
     os.makedirs("data-collection/data", exist_ok=True)
-    scrape_search("trending", max_results=10, out_file="data-collection/data/scraped_trending.jsonl") # working example usage for 10 trending videos
+    scrape_search("trending", max_results=40, out_file="data-collection/data/scraped_data.jsonl") # working example usage for 10 trending videos
