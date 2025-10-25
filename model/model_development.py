@@ -32,6 +32,7 @@ import xgboost as xgb
 # Load feature-engineered data
 # ---------------------------
 df = pd.read_csv("feature-engineering/data/features.csv")
+print(f"Loaded dataset with {len(df)} rows and {len(df.columns)} columns")
 
 # ---------------------------
 # Choose target and features
@@ -48,16 +49,34 @@ feature_cols = [
 # ---------------------------
 # Split datasets by source
 # ---------------------------
-df_scraped = df[df.get('was_scraped_scraped', False) == True]
-df_api = df[df.get('was_api_api', False) == True]
+df_scraped = df[df.get("was_scraped_scraped", False) == True]
+df_api = df[df.get("was_api_api", False) == True]
 
+print(f"Scraped data size: {len(df_scraped)} | API data size: {len(df_api)}")
+
+# ---------------------------
+# Handle missing values in features and target
+# ---------------------------
+def clean_dataset(data, target):
+    # Drop rows where target is NaN
+    data = data.dropna(subset=[target])
+    # Drop rows with any NaN in feature columns
+    data = data.dropna(subset=feature_cols)
+    return data
+
+df_scraped = clean_dataset(df_scraped, target_col)
+df_api = clean_dataset(df_api, target_col)
+
+# ---------------------------
+# Prepare features and labels
+# ---------------------------
 X_scraped = df_scraped[feature_cols]
 y_scraped = df_scraped[target_col]
 X_api = df_api[feature_cols]
 y_api = df_api[target_col]
 
 # ---------------------------
-# Handle missing values
+# Impute missing values just in case
 # ---------------------------
 imputer = SimpleImputer(strategy="median")
 X_scraped = pd.DataFrame(imputer.fit_transform(X_scraped), columns=feature_cols)
@@ -83,7 +102,7 @@ X_train_a, X_test_a, y_train_a, y_test_a = split_data(X_api_scaled, y_api)
 # Initialize models
 # ---------------------------
 rf_model = RandomForestRegressor(n_estimators=100, random_state=42)
-xgb_model = xgb.XGBRegressor(n_estimators=100, random_state=42)
+xgb_model = xgb.XGBRegressor(n_estimators=100, random_state=42, objective="reg:squarederror")
 
 # ---------------------------
 # Train, evaluate, and collect metrics
@@ -109,7 +128,7 @@ def train_and_collect_metrics(X_train, X_test, y_train, y_test, model, model_nam
     # Feature importance (if available)
     if hasattr(model, "feature_importances_"):
         importances = model.feature_importances_
-        plt.figure(figsize=(8,4))
+        plt.figure(figsize=(8, 4))
         sns.barplot(x=feature_cols, y=importances, palette="coolwarm")
         plt.title(f"{model_name} Feature Importances ({dataset_name})")
         plt.ylabel("Importance")
@@ -134,7 +153,7 @@ print("\n=== MODEL TRAINING COMPLETE ===")
 # Compare model performance
 # ---------------------------
 perf_df = pd.DataFrame(results)
-plt.figure(figsize=(8,5))
+plt.figure(figsize=(8, 5))
 sns.barplot(data=perf_df, x="Dataset", y="R2", hue="Model", palette="viridis")
 plt.title("Model R² Comparison by Dataset")
 plt.ylabel("R² Score")
@@ -145,14 +164,12 @@ plt.show()
 # ---------------------------
 # Engagement trend visualizations
 # ---------------------------
-
-# Ensure required columns exist
 if "engagement_rate" not in df.columns and "engagement_rate_norm" in df.columns:
     df["engagement_rate"] = df["engagement_rate_norm"]
 
 # Category vs Engagement
 if "categoryId" in df.columns:
-    plt.figure(figsize=(10,5))
+    plt.figure(figsize=(10, 5))
     sns.boxplot(data=df, x="categoryId", y="engagement_rate")
     plt.title("Engagement Rate by Video Category")
     plt.xlabel("Category ID")
@@ -162,9 +179,9 @@ if "categoryId" in df.columns:
 # Video Length vs Engagement
 if "duration_minutes" in df.columns:
     df["length_bin"] = pd.cut(df["duration_minutes"],
-                              bins=[0,5,10,20,60,200],
-                              labels=["0-5","5-10","10-20","20-60","60+"])
-    plt.figure(figsize=(8,5))
+                              bins=[0, 5, 10, 20, 60, 200],
+                              labels=["0-5", "5-10", "10-20", "20-60", "60+"])
+    plt.figure(figsize=(8, 5))
     sns.boxplot(data=df, x="length_bin", y="engagement_rate")
     plt.title("Engagement Rate by Video Length")
     plt.xlabel("Video Length (minutes)")
@@ -174,7 +191,7 @@ if "duration_minutes" in df.columns:
 # Upload Month vs Engagement
 if "publishedAt" in df.columns:
     df["upload_month"] = pd.to_datetime(df["publishedAt"], errors='coerce').dt.month
-    plt.figure(figsize=(10,5))
+    plt.figure(figsize=(10, 5))
     sns.boxplot(data=df, x="upload_month", y="engagement_rate")
     plt.title("Engagement Rate by Upload Month")
     plt.xlabel("Month")

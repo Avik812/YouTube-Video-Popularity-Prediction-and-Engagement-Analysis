@@ -55,7 +55,7 @@ if __name__ == "__main__":
     queries = ["trending", "music", "gaming", "news"]
     all_vids = []
     for q in queries:
-        ids = get_video_ids_from_search(q, max_results=10)  # tune to reach 3000
+        ids = get_video_ids_from_search(q, max_results=3000)  # tune to reach 3000
         vids = fetch_videos(ids)
         all_vids.extend(vids)
     with open("data-collection/data/api_data.jsonl", "w", encoding="utf-8") as f:
